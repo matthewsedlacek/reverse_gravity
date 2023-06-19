@@ -2,7 +2,10 @@ module github.com/matthewsedlacek/reverse_gravity
 
 go 1.20
 
-require github.com/hajimehoshi/ebiten/v2 v2.5.4
+require (
+	github.com/hajimehoshi/ebiten v1.12.12
+	github.com/hajimehoshi/ebiten/v2 v2.5.4
+)
 
 require (
 	github.com/ebitengine/purego v0.3.0 // indirect

@@ -1,0 +1,12 @@
+width=800
+height=600
+background=assets/images/space_background.png
+gravity=1.5
+
+player_start_x=100
+player_start_y=100
+
+platforms:
+platform1,100,500,200,20
+platform2,500,400,150,20
+platform3,300,300,100,20

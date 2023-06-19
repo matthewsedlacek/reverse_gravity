@@ -1,30 +1,43 @@
 package main
 
 import (
-	"log"
-
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"github.com/matthewsedlacek/reverse_gravity/game"
 )
 
-type Game struct{}
+const (
+	screenWidth  = 800
+	screenHeight = 600
+)
 
-func (g *Game) Update() error {
+var (
+	g *game.Game
+)
+
+func update(screen *ebiten.Image) error {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		// Handle game exit when the Escape key is pressed
+		return ebiten.Termination
+	}
+
+	if err := g.Update(); err != nil {
+		return err
+	}
+
+	g.Draw(screen)
+
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Hello, World!")
-}
-
-func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
-}
-
 func main() {
-	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Hello, World!")
-	if err := ebiten.RunGame(&Game{}); err != nil {
-		log.Fatal(err)
+	ebiten.SetWindowSize(screenWidth, screenHeight)
+	ebiten.SetWindowTitle("Reverse Gravity")
+
+	g = game.NewGame()
+
+	if err := ebiten.RunGame(g); err != nil {
+		panic(err)
 	}
 }
