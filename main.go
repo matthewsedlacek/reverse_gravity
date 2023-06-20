@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	screenWidth  = 800
-	screenHeight = 600
+	screenWidth  = 640
+	screenHeight = 480
 )
 
 var (
