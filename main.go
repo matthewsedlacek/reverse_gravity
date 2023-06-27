@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -24,7 +25,7 @@ const (
 	platformWidth   = 128
 	platformHeight  = 16
 	platformSpacing = 200
-	finishLineMiles = 100
+	finishLineMiles = 400
 )
 
 type Game struct {
@@ -74,7 +75,7 @@ func main() {
 
 	game := &Game{
 		charX:            screenWidth / 2,
-		charY:            screenHeight - charHeight,
+		charY:            screenHeight - charHeight -32,
 		charYSpeed:       0,
 		onGround:         true,
 		prevSpacePressed: false,
@@ -107,16 +108,22 @@ func main() {
 }
 
 func (g *Game) Update() error {
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return ebiten.Termination
+	}
+
 	spacePressed := inpututil.IsKeyJustPressed(ebiten.KeySpace)
+	leftPressed := ebiten.IsKeyPressed(ebiten.KeyLeft)
+	rightPressed := ebiten.IsKeyPressed(ebiten.KeyRight)
 
 	// Apply gravity
-	if !g.onGround {
-		g.charYSpeed += 0.5
-	}
+	gravity := 0.1 // Initial gravity value
+	g.charYSpeed += gravity
 
 	// Handle jumping
 	if spacePressed && g.onGround && !g.prevSpacePressed {
-		g.charYSpeed = -12
+		g.charYSpeed = -5 // Adjust the initial jump velocity to your preference
 		g.jumpPlayer.Rewind()
 		g.jumpPlayer.Play()
 		g.onGround = false // Reset onGround status when jumping
@@ -124,15 +131,12 @@ func (g *Game) Update() error {
 
 	g.prevSpacePressed = spacePressed
 
-	leftPressed := ebiten.IsKeyPressed(ebiten.KeyLeft)
-	rightPressed := ebiten.IsKeyPressed(ebiten.KeyRight)
-
 	// Apply horizontal movement
 	if leftPressed {
-		g.charX -= 5
+		g.charX -= 3 // Adjust the horizontal movement speed to your preference
 	}
 	if rightPressed {
-		g.charX += 5
+		g.charX += 3 // Adjust the horizontal movement speed to your preference
 	}
 
 	// Apply vertical speed
@@ -159,6 +163,13 @@ func (g *Game) Update() error {
 		fmt.Println("Game Over")
 		return ebiten.Termination
 	}
+
+	// Decrease gravity over time
+	gravityDecrease := 0.001 // Adjust the gravity decrease rate to your preference
+	if gravity > 0 {
+		gravity -= gravityDecrease
+	}
+	g.charYSpeed = math.Min(g.charYSpeed, 5) // Limit the maximum falling speed
 
 	return nil
 }
