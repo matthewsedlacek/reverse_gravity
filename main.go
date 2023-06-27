@@ -119,6 +119,7 @@ func (g *Game) Update() error {
 		g.charYSpeed = -12
 		g.jumpPlayer.Rewind()
 		g.jumpPlayer.Play()
+		g.onGround = false // Reset onGround status when jumping
 	}
 
 	g.prevSpacePressed = spacePressed
@@ -135,11 +136,6 @@ func (g *Game) Update() error {
 			g.charYSpeed = 0
 			g.onGround = true
 		}
-	}
-
-	// Update onGround status
-	if g.charY+charHeight < screenHeight {
-		g.onGround = false
 	}
 
 	// Generate new platform if needed
