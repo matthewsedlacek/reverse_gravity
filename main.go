@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -75,7 +74,7 @@ func main() {
 
 	game := &Game{
 		charX:            screenWidth / 2,
-		charY:            screenHeight - charHeight -32,
+		charY:            screenHeight - charHeight - 32,
 		charYSpeed:       0,
 		onGround:         true,
 		prevSpacePressed: false,
@@ -108,17 +107,20 @@ func main() {
 }
 
 func (g *Game) Update() error {
-
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return ebiten.Termination
 	}
-
+	
 	spacePressed := inpututil.IsKeyJustPressed(ebiten.KeySpace)
 	leftPressed := ebiten.IsKeyPressed(ebiten.KeyLeft)
 	rightPressed := ebiten.IsKeyPressed(ebiten.KeyRight)
+	shiftPressed := inpututil.IsKeyJustPressed(ebiten.KeyShift)
 
 	// Apply gravity
 	gravity := 0.1 // Initial gravity value
+	if shiftPressed {
+		gravity = -1.0 // Reverse gravity if shift key is pressed
+	}
 	g.charYSpeed += gravity
 
 	// Handle jumping
@@ -163,13 +165,6 @@ func (g *Game) Update() error {
 		fmt.Println("Game Over")
 		return ebiten.Termination
 	}
-
-	// Decrease gravity over time
-	gravityDecrease := 0.001 // Adjust the gravity decrease rate to your preference
-	if gravity > 0 {
-		gravity -= gravityDecrease
-	}
-	g.charYSpeed = math.Min(g.charYSpeed, 5) // Limit the maximum falling speed
 
 	return nil
 }
