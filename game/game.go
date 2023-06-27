@@ -1,6 +1,8 @@
 package game
 
 import (
+	"image/color"
+
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/matthewsedlacek/reverse_gravity/levels"
@@ -11,6 +13,7 @@ type Game struct {
 	levels       []*levels.Level
 	loading      bool
 	loadingImage *ebiten.Image
+	NewPlayer    *Player
 }
 
 func NewGame() *Game {
@@ -23,6 +26,7 @@ func NewGame() *Game {
 		},
 		loading:      true,
 		loadingImage: loadImage("assets/images/loading_screen.png"),
+		NewPlayer:    nil,
 	}
 	return g
 }
@@ -36,6 +40,9 @@ func (g *Game) Update() error {
 		g.loading = false
 		return nil
 	}
+
+	// Update the player
+	// g.player.Update()
 
 	level := g.levels[g.currentLevel]
 	if level.IsComplete() {
@@ -58,6 +65,12 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Clear the screen
+	screen.Fill(color.White)
+
+	// Draw the player
+	g.NewPlayer.Draw(screen)
+
 	if g.loading {
 		// Draw loading screen
 		screen.DrawImage(g.loadingImage, nil)
