@@ -124,6 +124,17 @@ func (g *Game) Update() error {
 
 	g.prevSpacePressed = spacePressed
 
+	leftPressed := ebiten.IsKeyPressed(ebiten.KeyLeft)
+	rightPressed := ebiten.IsKeyPressed(ebiten.KeyRight)
+
+	// Apply horizontal movement
+	if leftPressed {
+		g.charX -= 5
+	}
+	if rightPressed {
+		g.charX += 5
+	}
+
 	// Apply vertical speed
 	g.charY += g.charYSpeed
 
