@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -24,7 +25,7 @@ const (
 	platformWidth   = 128
 	platformHeight  = 16
 	platformSpacing = 200
-	finishLineMiles = 400
+	finishLineMiles = 4000
 )
 
 type Game struct {
@@ -39,6 +40,8 @@ type Game struct {
 	audioContext     *audio.Context
 	jumpPlayer       *audio.Player
 	finishLineMiles  float64
+	distance         float64
+	altitude         float64
 }
 
 type Platform struct {
@@ -110,7 +113,7 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return ebiten.Termination
 	}
-	
+
 	spacePressed := inpututil.IsKeyJustPressed(ebiten.KeySpace)
 	leftPressed := ebiten.IsKeyPressed(ebiten.KeyLeft)
 	rightPressed := ebiten.IsKeyPressed(ebiten.KeyRight)
@@ -156,7 +159,7 @@ func (g *Game) Update() error {
 	}
 
 	// Generate new platform if needed
-	if g.charY < screenHeight/2 && len(g.platforms) < 8 {
+	if g.charY < screenHeight/2 && len(g.platforms) < 50 {
 		g.generateNewPlatform()
 	}
 
@@ -165,6 +168,12 @@ func (g *Game) Update() error {
 		fmt.Println("Game Over")
 		return ebiten.Termination
 	}
+
+	// Calculate distance traveled in pixels
+	g.distance += math.Abs(g.charYSpeed)
+
+	// Update altitude
+	g.altitude = screenHeight - g.charY
 
 	return nil
 }
@@ -177,7 +186,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-float64(screenX), -float64(screenY))
-	screen.DrawImage(g.backgroundImage, op)
+
+	// Render background images
+	for i := -1; i <= 1; i++ {
+		for j := -1; j <= 1; j++ {
+			bgX := (screenX / screenWidth) + i
+			bgY := (screenY / screenHeight) + j
+			op.GeoM.Translate(float64(bgX*screenWidth), float64(bgY*screenHeight))
+			screen.DrawImage(g.backgroundImage, op)
+			op.GeoM.Translate(-float64(bgX*screenWidth), -float64(bgY*screenHeight))
+		}
+	}
 
 	for _, platform := range g.platforms {
 		platformX := platform.x - float64(screenX)
@@ -192,8 +211,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	charOp.GeoM.Translate(screenWidth/2-charWidth/2, screenHeight/2-charHeight/2)
 	screen.DrawImage(g.charImage, charOp)
 
-	progressStr := fmt.Sprintf("Progress: %.1f miles / %.1f miles", g.charY/10, finishLineMiles)
-	ebitenutil.DebugPrint(screen, progressStr)
+	// progressStr := fmt.Sprintf("Progress: %.1f miles", g.distance/10)
+	// ebitenutil.DebugPrint(screen, progressStr)
+
+	altitudeStr := fmt.Sprintf("Altitude: %.1f", g.altitude)
+	ebitenutil.DebugPrint(screen, altitudeStr)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
