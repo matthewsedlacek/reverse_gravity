@@ -7,12 +7,10 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/wav"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -28,7 +26,6 @@ const (
 	platformWidth   = 128
 	platformHeight  = 16
 	platformSpacing = 200
-	finishLineMiles = 4000
 )
 
 type Game struct {
@@ -41,8 +38,6 @@ type Game struct {
 	backgroundImage  *ebiten.Image
 	charImage        *ebiten.Image
 	audioContext     *audio.Context
-	jumpPlayer       *audio.Player
-	finishLineMiles  float64
 	distance         float64
 	altitude         float64
 	reachedSpace     bool
@@ -58,11 +53,6 @@ type Platform struct {
 func main() {
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Reverse Gravity")
-
-	jumpPlayer, err := loadAudioPlayer("assets/sounds/slime_jump.wav")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Load character image
 	_, backImage, err := ebitenutil.NewImageFromFile("assets/images/space_background.png")
@@ -93,7 +83,7 @@ func main() {
 
 	game := &Game{
 		charX:            screenWidth / 2,
-		charY:            screenHeight - charHeight - platformHeight -50,
+		charY:            screenHeight - charHeight - platformHeight - 50,
 		charYSpeed:       0,
 		onGround:         true,
 		prevSpacePressed: false,
@@ -117,7 +107,6 @@ func main() {
 		},
 		backgroundImage: backgroundImage,
 		charImage:       charImage,
-		jumpPlayer:      jumpPlayer,
 		fontFace:        fontFace,
 	}
 
@@ -146,8 +135,6 @@ func (g *Game) Update() error {
 	// Handle jumping
 	if spacePressed && g.onGround && !g.prevSpacePressed {
 		g.charYSpeed = -5 // Adjust the initial jump velocity to your preference
-		g.jumpPlayer.Rewind()
-		g.jumpPlayer.Play()
 		g.onGround = false // Reset onGround status when jumping
 	}
 
@@ -219,7 +206,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.GeoM.Translate(-float64(bgX*screenWidth), -float64(bgY*screenHeight))
 		}
 	}
-
+        
 	for _, platform := range g.platforms {
 		platformX := platform.x - float64(screenX)
 		platformY := platform.y - float64(screenY)
@@ -238,9 +225,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.reachedSpace {
 		congratsStr := "Congratulations!\nYou made it to space!"
-        // Display game over message
-        gameOverWidth := measureTextWidth(congratsStr, g.fontFace)
-        ebitenutil.DebugPrintAt(screen, congratsStr, (screenWidth-gameOverWidth)/2, screenHeight/2)
+		// Display game over message
+		gameOverWidth := measureTextWidth(congratsStr, g.fontFace)
+		ebitenutil.DebugPrintAt(screen, congratsStr, (screenWidth-gameOverWidth)/2, screenHeight/2)
 	}
 
 }
@@ -267,34 +254,6 @@ func (g *Game) generateNewPlatform() {
 
 func (g *Game) randomPlatformX() float64 {
 	return rand.Float64()*(screenWidth-platformWidth) + platformWidth/2
-}
-
-func loadAudioPlayer(filepath string) (*audio.Player, error) {
-
-	// Create audio context
-	audioContext, err := audio.NewContext(48000)
-	if err != nil {
-		panic(err)
-	}
-
-	// Load jump sound
-	jumpFile, err := os.Open("assets/sounds/slime_jump.wav")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer jumpFile.Close()
-
-	jumpDecoded, err := wav.Decode(audioContext, jumpFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jumpPlayer, err := audio.NewPlayer(audioContext, jumpDecoded)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return jumpPlayer, nil
 }
 
 func measureTextWidth(text string, face font.Face) int {
