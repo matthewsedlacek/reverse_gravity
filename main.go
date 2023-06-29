@@ -10,11 +10,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/audio/wav"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/gomono"
 )
 
 const (
@@ -42,6 +45,9 @@ type Game struct {
 	finishLineMiles  float64
 	distance         float64
 	altitude         float64
+	reachedSpace     bool
+	gameOver         bool
+	fontFace         font.Face
 }
 
 type Platform struct {
@@ -75,9 +81,19 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
+	// Load the font
+	fontData, err := truetype.Parse(gomono.TTF)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fontFace := truetype.NewFace(fontData, &truetype.Options{
+		Size: 12,
+	})
+
 	game := &Game{
 		charX:            screenWidth / 2,
-		charY:            screenHeight - charHeight - 32,
+		charY:            screenHeight - charHeight - platformHeight -50,
 		charYSpeed:       0,
 		onGround:         true,
 		prevSpacePressed: false,
@@ -102,6 +118,7 @@ func main() {
 		backgroundImage: backgroundImage,
 		charImage:       charImage,
 		jumpPlayer:      jumpPlayer,
+		fontFace:        fontFace,
 	}
 
 	if err := ebiten.RunGame(game); err != nil {
@@ -175,6 +192,11 @@ func (g *Game) Update() error {
 	// Update altitude
 	g.altitude = screenHeight - g.charY
 
+	// Check if player reached space
+	if !g.reachedSpace && g.altitude >= 10000 {
+		g.reachedSpace = true
+	}
+
 	return nil
 }
 
@@ -211,11 +233,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	charOp.GeoM.Translate(screenWidth/2-charWidth/2, screenHeight/2-charHeight/2)
 	screen.DrawImage(g.charImage, charOp)
 
-	// progressStr := fmt.Sprintf("Progress: %.1f miles", g.distance/10)
-	// ebitenutil.DebugPrint(screen, progressStr)
-
 	altitudeStr := fmt.Sprintf("Altitude: %.1f", g.altitude)
 	ebitenutil.DebugPrint(screen, altitudeStr)
+
+	if g.reachedSpace {
+		congratsStr := "Congratulations!\nYou made it to space!"
+        // Display game over message
+        gameOverWidth := measureTextWidth(congratsStr, g.fontFace)
+        ebitenutil.DebugPrintAt(screen, congratsStr, (screenWidth-gameOverWidth)/2, screenHeight/2)
+	}
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -268,4 +295,21 @@ func loadAudioPlayer(filepath string) (*audio.Player, error) {
 	}
 
 	return jumpPlayer, nil
+}
+
+func measureTextWidth(text string, face font.Face) int {
+	totalWidth := 0
+
+	for _, runeValue := range text {
+		advance, ok := face.GlyphAdvance(runeValue)
+		if !ok {
+			// Handle the case where advance width is not available for the rune
+			continue
+		}
+
+		width := int(advance.Ceil())
+		totalWidth += width
+	}
+
+	return totalWidth
 }
